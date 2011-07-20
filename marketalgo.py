@@ -30,7 +30,7 @@ class TrendFinder(object):
         self.symbol = symbol
         self.fh = db.query("""SELECT date,open,close,high,low,id from %s order by date"""% self.symbol)
         self.DAYS = 30
-        self.TRENDRATE = 55
+        self.TRENDRATE = 70
         self.trianglefound = False
         self.headfound = False
         self.counter = self.DAYS
@@ -68,7 +68,7 @@ class TrendFinder(object):
         self.p3arrow = False
         self.p4arrow = False
         self.p5arrow = False
-        self.trendline = False
+        self.trendine = False
         self.p13line = False
         self.p24line = False
         self.nodata = False
@@ -130,38 +130,43 @@ class TrendFinder(object):
         up = 0
         down = 0
         # data in fh - date, open, close, high, low
-        for row in range(self.counter-(self.DAYS-1),self.counter+1):
+        for row in range(self.counter-(self.DAYS), self.counter):
             # This is the original. Test to see if close is higher than day before
-#            if self.fh[row]['close'] > self.lastDay['close']:
+            if self.fh[row]['close'] > self.fh[row-1]['close']:
+
             # New version. Test to see if close is higher than the first day
-            if self.fh[row]['close'] > self.fh[self.counter-(self.DAYS-1)]['close']:
+#            if self.fh[row]['close'] > self.fh[self.counter-(self.DAYS)]['close']:
                 up += 1
             else:
                 down += 1
-            self.lastDay = self.fh[row]
 
         changeUP = up/self.pot
         changeUP = changeUP * 100
         changeDOWN = down/self.pot
         changeDOWN = changeDOWN * 100
 
-        self.p1date = self.lastDay['date']
-        self.p1high = self.lastDay['high']
-        self.p1low = self.lastDay['low']
+        print "UP",changeUP
+        print "DOWN",changeDOWN
+
+        self.p1date = self.fh[self.counter-1]['date']
+        self.p1high = self.fh[self.counter-1]['high']
+        self.p1low = self.fh[self.counter-1]['low']
         self.p2low = self.p1low
         self.p2high = self.p1high
 
         if changeUP > self.TRENDRATE and not self.boolUP:
-#            print 'Upward trend identified for %s. Point 1 set at %.2f'% (self.symbol, self.fh[self.counter]['high'])
+            print 'Upward trend identified for %s. Point 1 set at %.2f'% (self.symbol, self.fh[self.counter]['high'])
             self.boolUP = True
+            self.boolDOWN = False
             self.trendline = False
             self.p1arrow = True
             self.p1set = True
             return True
         elif changeDOWN > self.TRENDRATE and not self.boolDOWN:
-#            print 'Downward trend identified for %s. Point 1 set at %.2f'% (self.symbol, self.fh[self.counter]['low'])
+            print 'Downward trend identified for %s. Point 1 set at %.2f'% (self.symbol, self.fh[self.counter]['low'])
             self.trendline = False
             self.p1arrow = True
+            self.boolUP = False
             self.boolDOWN = True
             self.p1set = True
             return True
@@ -229,8 +234,9 @@ class Triangle(object):
         currentLow = self.fh[self.counter]['low']
 
         self.daysoftrend += 1
+
         if self.daysoftrend >= self.maxdays:
-#            print "Error", "Trend exceded maximum number of days"
+            print "Error", "Trend exceded maximum number of days"
             return False
 
         # Triangle with a upward trend
@@ -290,7 +296,7 @@ class Triangle(object):
                 self.p24line = True
                 self.incriment = False
                 self.daysoftrend = 0
-                print 'Point 4 set at %.2f'%self.p4low
+#                print 'Point 4 set at %.2f'%self.p4low
                 self.trianglefound = True
             else:
 #                print 'New data did nothing'
@@ -355,7 +361,7 @@ class Triangle(object):
                 self.p24line = True
                 self.incriment = False
                 self.daysoftrend = 0
-                print 'Point 4 set at %.2f'%self.p4high
+#                print 'Point 4 set at %.2f'%self.p4high
                 self.trianglefound = True               
             else:
 #                print 'New data did nothing'
@@ -371,7 +377,7 @@ class Triangle(object):
                 trendtype = "Upward Triangle"
 
             # insert trend in db. send to web server
-            db.execute("""INSERT INTO trends(uuid, date, symbol, type, p1, p2, p3, p4, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.fh[self.counter]['date'], self.symbol, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, time.time())
+            db.execute("""INSERT INTO trends(uuid, startdate, date, symbol, type, p1, p2, p3, p4, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.p1date, self.p4date, self.symbol, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, time.time())
             channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (self.symbol, trenduuid))
             return False
 
@@ -438,7 +444,7 @@ class HeadAndShoulders(object):
         currentLow = self.fh[self.counter]['low']
 
         if self.daysoftrend >= self.maxdays:
-#            print "Error", "Trend exceded maximum number of days"
+            print "Error", "Trend exceded maximum number of days"
             return False
 
         # Head and Shoulders trend with an upward trend
@@ -467,7 +473,7 @@ class HeadAndShoulders(object):
                 self.p5set = False
                 self.p3high = 0
                 self.p4low = 0
-                print 'New data is higher than Point 1. Start looking for new trend. HeadandShoulders'
+#                print 'New data is higher than Point 1. Start looking for new trend. HeadandShoulders'
                 return False
             # Set point 2
             elif currentLow < self.p1low and currentLow < self.p2low and self.p1set and not self.p2set:
@@ -567,7 +573,7 @@ class HeadAndShoulders(object):
                 self.p5arrow = True
                 self.daysoftrend = 0
                 self.headfound = True               
-                print 'Point 5 set at %.2f'%self.p5high
+#                print 'Point 5 set at %.2f'%self.p5high
             else:
                 #print 'New data did nothing'
                 self.nodata = True
@@ -703,7 +709,7 @@ class HeadAndShoulders(object):
                 self.p5date = currentDate
                 self.p5arrow = True
                 self.daysoftrend = 0
-                print 'Point 5 set at %.2f'%self.p5low
+#                print 'Point 5 set at %.2f'%self.p5low
                 self.headfound = True
             else:
                 #print 'New data did nothing'
@@ -719,7 +725,7 @@ class HeadAndShoulders(object):
                 trendtype = "Upward Head and Shoulders"
 
             # insert trend in db. send to web server
-            db.execute("""INSERT INTO trends(uuid, date, symbol, type, p1, p2, p3, p4, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.fh[self.counter]['date'], self.symbol, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, time.time())
+            db.execute("""INSERT INTO trends(uuid, startdate, date, symbol, type, p1, p2, p3, p4, p5, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.p1date, self.p5date, self.symbol, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, self.p5date, time.time())
             channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (self.symbol, trenduuid))
             return False
 
@@ -734,10 +740,9 @@ sy = db.query("""SHOW TABLES""")
 for s in sy:
     watch.append(s['Tables_in_market'])
 
-
-#for x in range(0, 10):
 while True:
     for w in watch:
+        print w
         if w == 'trends':
             continue
         if w not in currentdata:
@@ -748,20 +753,22 @@ while True:
             headandshoulders = HeadAndShoulders(currentdata[w])
             trends.append(triangle)
             trends.append(headandshoulders)
+#            currentdata[w].counter += 10
 
         currentdata[w].counter +=1
+
         for trend in trends:
             res = trend.trend()
             if res == True:
                 trend.counter += 1
             else:
                 trends.remove(trend)
-            time.sleep(0.1)
+#        time.sleep(0.1)
 
     # trim trend database
     numoftrends = db.get("""SELECT count(id) FROM trends""")
     numoftrends = int(numoftrends['count(id)'])
-    if numoftrends > 100:
+    if numoftrends > 200:
         trim = db.query("""SELECT * FROM trends ORDER BY created desc""")
-        for t in trim[100:]:
+        for t in trim[200:]:
             db.execute("""DELETE FROM trends WHERE id = %s""", t['id'])
