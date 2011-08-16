@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import pika
 import tornado.database
 from tornado.options import define, options
@@ -554,7 +556,8 @@ class HeadAndShoulders(object):
                 self.daysoftrend = 0
                 #print 'HEAD Point 4 set at %.2f'%self.p4low
             # test against point 4 to see if lower. reset point 4 if it is.
-            elif currentLow < self.p4low and self.p1set and self.p2set and self.p3set and self.p4set and not self.p5set:
+            # Be sure to test against height
+            elif currentLow < self.p4low and self.p1set and self.p2set and self.p3set and self.p4set and not self.p5set and currentLow < self.diffhigh:
                 self.p4date = currentDate
                 self.p4set = True
                 self.p5set = False
@@ -690,7 +693,7 @@ class HeadAndShoulders(object):
                 self.daysoftrend = 0
                 #print 'HEAD Point 4 set at %.2f'%self.p4high
             # test against point 4 to see if higher. reset point 4 if it is.
-            elif currentHigh > self.p4high and self.p1set and self.p2set and self.p3set and self.p4set and not self.p5set:
+            elif currentHigh > self.p4high and self.p1set and self.p2set and self.p3set and self.p4set and not self.p5set and currentHigh > self.difflow:
                 self.p4date = currentDate
                 self.p4set = True
                 self.p5set = False
