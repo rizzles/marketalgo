@@ -37,7 +37,7 @@ class TrendFinder(object):
             self.DAYS = len(self.fh)
         else:
             self.DAYS = 30
-        self.TRENDRATE = 55
+        self.TRENDRATE = 60
         self.trianglefound = False
         self.headfound = False
         self.counter = self.DAYS
@@ -338,9 +338,18 @@ class Triangle(object):
             else:
                 trendtype = "Upward Triangle"
 
+            sym = ""
+            if arg[1] == "ten":
+                sym = self.symbol + "_ten"
+            elif arg[1] == "thirty":
+                sym = self.symbol + "_thirty"
+            elif arg[1] == "sixty":
+                sym = self.symbol + "_sixty"
+            print "Trend Found", sym, trendtype
+
             # insert trend in db. send to web server
-            db.execute("""INSERT INTO trends.trends(uuid, startdate, date, symbol, type, p1, p2, p3, p4, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.p1date, self.p4date, self.symbol, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, time.time())
-            channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (self.symbol, trenduuid))
+            db.execute("""INSERT INTO trends.trends(uuid, startdate, date, symbol, type, p1, p2, p3, p4, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.p1date, self.p4date, sym, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, time.time())
+            channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (sym, trenduuid))
             return False
 
         return True
@@ -511,9 +520,11 @@ class HeadAndShoulders(object):
                 self.p4low = currentLow
                 self.p24line = True
                 self.p4arrow = True
+
                 self.diff = self.p3high - self.p2low
                 self.diff = self.diff /2
                 self.diffhigh = self.p3high - self.diff
+
                 self.daysoftrend = 0
                 print 'HEAD Point 4 set at %.2f'%self.p4low
             # test against point 4 to see if lower. reset point 4 if it is.
@@ -645,16 +656,19 @@ class HeadAndShoulders(object):
                 self.p5set = False
                 self.p4low = currentLow
                 self.p4high = currentHigh
+
                 self.diff = self.p2high - self.p3low 
                 self.diff = self.diff /2
                 self.difflow = self.p3low + self.diff
+
                 self.p24line = True
                 self.p4arrow = True
                 self.p5arrow = False
                 self.daysoftrend = 0
                 print 'HEAD Point 4 set at %.2f'%self.p4high
             # test against point 4 to see if higher. reset point 4 if it is.
-            elif currentHigh > self.p4high and self.p1set and self.p2set and self.p3set and self.p4set and not self.p5set and currentHigh > self.difflow:
+#            elif currentHigh > self.p4high and self.p1set and self.p2set and self.p3set and self.p4set and not self.p5set and currentHigh > self.difflow:
+            elif currentHigh > self.p4high and self.p1set and self.p2set and self.p3set and self.p4set and not self.p5set:
                 self.p4date = currentDate
                 self.p4set = True
                 self.p5set = False
@@ -688,9 +702,18 @@ class HeadAndShoulders(object):
             else:
                 trendtype = "Upward Head and Shoulders"
 
+            sym = ""
+            if arg[1] == "ten":
+                sym = self.symbol + "_ten"
+            elif arg[1] == "thirty":
+                sym = self.symbol + "_thirty"
+            elif arg[1] == "sixty":
+                sym = self.symbol + "_sixty"
+            print "Trend Found", sym, trendtype
+
             # insert trend in db. send to web server
-            db.execute("""INSERT INTO trends.trends(uuid, startdate, date, symbol, type, p1, p2, p3, p4, p5, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.p1date, self.p5date, self.symbol, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, self.p5date, time.time())
-            channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (self.symbol, trenduuid))
+            db.execute("""INSERT INTO trends.trends(uuid, startdate, date, symbol, type, p1, p2, p3, p4, p5, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.p1date, self.p5date, sym, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, self.p5date, time.time())
+            channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (sym, trenduuid))
             return False
 
         return True
@@ -734,11 +757,15 @@ def inserttick(stime, tick, symbol):
     db.execute("""INSERT INTO %s(high, low, open, close, date) VALUES(%s, %s, %s, %s, %s)"""% (table, tick[0], tick[1], tick[2], tick[3], int(time.time())))
 
 
+print "Starting market algo"
+
 watch = []
 arg = sys.argv
-trendfile = open('trends%s.data'%arg[1], 'rb')
+print "Arguments", arg[1]
+trendfile = open('/home/ubuntu/marketalgo/trends%s.data'%arg[1], 'rb')
 trends = pickle.load(trendfile)
 #trends = []
+
 
 db.execute("""USE realtime""")
 sy = db.query("""SHOW TABLES""")
@@ -777,7 +804,7 @@ for y in remove:
     trends.pop(y)
 
 # pickle functions
-output1 = open('trends%s.data'%arg[1], 'wb')
+output1 = open('/home/ubuntu/marketalgo/trends%s.data'%arg[1], 'wb')
 pickle.dump(trends, output1)
 
     # trim trend database

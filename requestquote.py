@@ -14,15 +14,14 @@ def createtable(symbol):
     cursor.execute("CREATE TABLE %s (id INT AUTO_INCREMENT, querytime INT,last FLOAT, PRIMARY KEY(id))"% symbol) 
 #    cursor.execute("CREATE TABLE %s (id INT AUTO_INCREMENT, querytime INT, lasttradetime INT, open FLOAT, close FLOAT, high FLOAT, low FLOAT, last FLOAT, PRIMARY KEY(id))"% symbol) 
 
-
-req = urllib2.Request('http://app.quotemedia.com/data/getSnapQuotes.xml?symbols=/o,/w,c,s,so,sm,/us,ty,/fv,/spz1.oc,df,/lc,eu,$CADUSD,$AUDUSD,$JPYUSD&webmasterId=101433')
+#req = urllib2.Request('http://app.quotemedia.com/data/getSnapQuotes.xml?symbols=/o,/w,c,s,so,sm,/us,ty,/fv,/spz1.oc,df,/lc,eu,$CADUSD,$AUDUSD,$JPYUSD&webmasterId=101433')
+req = urllib2.Request('http://app.quotemedia.com/data/getSnapQuotes.xml?symbols=/zwz1,/zsx1,/zcz1,/zmz1,/zlz1,/zmz1,/zlz1,/6ju1,/6bu1,/6eu1,/6au1,/6cu1,/6su1,/usu1,/znu1,/fvu1,/tuu1,/spu1,/ndu1&webmasterId=101433')
 response = urllib2.urlopen(req)
 xml = response.read()
-
 dom = parseString(xml)
 quotes = dom.getElementsByTagName('quote')
 
-for num in range(1,3):
+for num in range(1,4):
     for quote in quotes:
         symbol = quote.firstChild.firstChild.firstChild.data
 
@@ -74,5 +73,5 @@ for num in range(1,3):
 #                cursor.execute("""INSERT INTO %s(open, high, low, close, last, lasttradetime, querytime) VALUES(%s, %s, %s, %s, %s, %s, %s)"""%(symbol, o, h, l, c, last, lasttrade, querytime))
     
     print "Sleeping...", num
-    time.sleep(28)
+    time.sleep(14)
 
