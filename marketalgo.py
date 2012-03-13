@@ -21,13 +21,11 @@ db = tornado.database.Connection(
     host=options.host, database=options.database,
     user=options.mysql_user, password=options.mysql_password)
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-channel = connection.channel()
-channel.queue_declare(queue='market')
-channel.exchange_declare(exchange='market', type='fanout')
+#connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+#channel = connection.channel()
+#channel.queue_declare(queue='market')
+#channel.exchange_declare(exchange='market', type='fanout')
 
-#channel.basic_consume(callback, queue='market', no_ack=True)
-#channel.start_consuming()
 
 class TrendFinder(object):
     def __init__(self, symbol, arg):
@@ -345,11 +343,13 @@ class Triangle(object):
                 sym = self.symbol + "_thirty"
             elif arg[1] == "sixty":
                 sym = self.symbol + "_sixty"
+            elif arg[1] == "daily":
+                sym = self.symbol + "_daily"
             print "Trend Found", sym, trendtype
 
             # insert trend in db. send to web server
             db.execute("""INSERT INTO trends.trends(uuid, startdate, date, symbol, type, p1, p2, p3, p4, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.p1date, self.p4date, sym, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, time.time())
-            channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (sym, trenduuid))
+            #channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (sym, trenduuid))
             return False
 
         return True
@@ -709,11 +709,14 @@ class HeadAndShoulders(object):
                 sym = self.symbol + "_thirty"
             elif arg[1] == "sixty":
                 sym = self.symbol + "_sixty"
+            elif arg[1] == "daily":
+                sym = self.symbol + "_daily"
+
             print "Trend Found", sym, trendtype
 
             # insert trend in db. send to web server
             db.execute("""INSERT INTO trends.trends(uuid, startdate, date, symbol, type, p1, p2, p3, p4, p5, created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", trenduuid, self.p1date, self.p5date, sym, trendtype, self.p1date, self.p2date, self.p3date, self.p4date, self.p5date, time.time())
-            channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (sym, trenduuid))
+            #channel.basic_publish(exchange='market', routing_key='', body='%s|%s'% (sym, trenduuid))
             return False
 
         return True
@@ -726,6 +729,8 @@ def createtick(stime, symbol):
         stime = 1805
     if stime == "sixty":
         stime = 3605
+    if stime == "daily":
+        stime = 86405
     
     starttime = int(time.time()) - stime
     alldata = db.query("""SELECT * FROM realtime.%s WHERE querytime >= %s"""%(w, starttime))
