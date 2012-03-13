@@ -812,10 +812,30 @@ for y in remove:
 output1 = open('/home/ubuntu/marketalgo/trends%s.data'%arg[1], 'wb')
 pickle.dump(trends, output1)
 
-    # trim trend database
-#    numoftrends = db.get("""SELECT count(id) FROM trends""")
-#    numoftrends = int(numoftrends['count(id)'])
-#    if numoftrends > 200:
-#        trim = db.query("""SELECT * FROM trends ORDER BY created desc""")
-#        for t in trim[200:]:
-#            db.execute("""DELETE FROM trends WHERE id = %s""", t['id'])
+
+# trim the database. Makes data load slowly
+watch =[]
+db.execute("""USE ticks""")
+sy = db.query("""SHOW TABLES""")
+for s in sy:
+    watch.append(s['Tables_in_ticks'])
+
+if arg == 'sixty':
+    for x in watch:
+        if x[-3:] == 'ten':
+            max = db.get("SELECT max(ID) from %s"% x)
+            max = int(max['max(ID)'])
+            max = max - 1000
+            db.execute("DELETE FROM %s WHERE ID < %s"%(x, max))
+
+        if x[-6:] == 'thirty':
+            max = db.get("SELECT max(ID) from %s"% x)
+            max = int(max['max(ID)'])
+            max = max - 750
+            db.execute("DELETE FROM %s WHERE ID < %s"%(x, max))
+
+        if x[-5:] == 'sixty':
+            max = db.get("SELECT max(ID) from %s"% x)
+            max = int(max['max(ID)'])
+            max = max - 500
+            db.execute("DELETE FROM %s WHERE ID < %s"%(x, max))

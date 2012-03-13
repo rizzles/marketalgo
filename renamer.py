@@ -40,5 +40,5 @@ for x in watch:
         table[2] = 'K'
         new = "".join(table)
         print x,new
-#        db.execute("""RENAME TABLE %s TO %s"""%(x, new))
+        db.execute("""RENAME TABLE %s TO %s"""%(x, new))
 
