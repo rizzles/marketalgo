@@ -1,0 +1,20 @@
+# m h  dom mon dow   command
+
+# 15 second requestquote from 7am to 4pm
+* 13-22 * * 1-5 /home/ubuntu/marketalgo/requestquote.py > /tmp/requestquote.log
+
+# 30 second request quot from 5pm to 7am
+* 23-0 * * 1-5 /home/ubuntu/marketalgo/requestquotethirty.py > /tmp/requestquotethirty.log
+* 0-12 * * 1-5 /home/ubuntu/marketalgo/requestquotethirty.py > /tmp/requestquotethirty.log
+
+0,10,20,30,40,50 0-22 * * 1-5 /home/ubuntu/marketalgo/marketalgo.py ten > /tmp/marketalgoten.log
+0,10,20,30,40,50 23-0 * * 1-5 /home/ubuntu/marketalgo/marketalgo.py ten > /tmp/marketalgoten.log
+
+30,59 0-22 * * 1-5 /home/ubuntu/marketalgo/marketalgo.py thirty > /tmp/marketalgothirty.log
+30,59 23-0 * * 1-5 /home/ubuntu/marketalgo/marketalgo.py thirty > /tmp/marketalgothirty.log
+
+59 0-22 * * 1-5 /home/ubuntu/marketalgo/marketalgo.py sixty > /tmp/marketalgosixty.log
+59 23-0 * * 1-5 /home/ubuntu/marketalgo/marketalgo.py sixty > /tmp/marketalgosixty.log
+
+# Daily at 4:00 pm chicago
+0 22 * * 1-5 /home/ubuntu/marketalgo/marketalgo.py daily > /tmp/marketalgodaily.log
